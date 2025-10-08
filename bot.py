@@ -2,7 +2,25 @@ import os
 import logging
 from telegram import Update, ReplyKeyboardMarkup, KeyboardButton
 from telegram.ext import Application, CommandHandler, MessageHandler, filters, ContextTypes, ConversationHandler
-from database import FuelDatabase
+import sqlite3
+import os
+from datetime import datetime
+
+# База данных прямо в коде
+def init_db():
+    conn = sqlite3.connect('fuel.db')
+    c = conn.cursor()
+    c.execute('''CREATE TABLE IF NOT EXISTS refills
+                 (id INTEGER PRIMARY KEY AUTOINCREMENT,
+                  user_id INTEGER, 
+                  date TEXT, 
+                  liters REAL, 
+                  cost REAL, 
+                  odometer INTEGER)''')
+    conn.commit()
+    conn.close()
+
+init_db()
 
 # Enable logging
 logging.basicConfig(
