@@ -30,7 +30,44 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 # Initialize database
-db = FuelDatabase()
+# Вместо db = FuelDatabase() используй это:
+
+import sqlite3
+import os
+from datetime import datetime
+
+# Инициализация базы данных
+def init_db():
+    conn = sqlite3.connect('fuel.db')
+    c = conn.cursor()
+    c.execute('''CREATE TABLE IF NOT EXISTS refills
+                 (id INTEGER PRIMARY KEY AUTOINCREMENT,
+                  user_id INTEGER, 
+                  date TEXT, 
+                  liters REAL, 
+                  cost REAL, 
+                  odometer INTEGER)''')
+    conn.commit()
+    conn.close()
+
+init_db()
+
+# Функции для работы с базой вместо FuelDatabase методов
+def add_refill(user_id, liters, cost, odometer):
+    conn = sqlite3.connect('fuel.db')
+    c = conn.cursor()
+    c.execute("INSERT INTO refills (user_id, date, liters, cost, odometer) VALUES (?, ?, ?, ?, ?)",
+             (user_id, datetime.now().isoformat(), liters, cost, odometer))
+    conn.commit()
+    conn.close()
+
+def get_user_refills(user_id):
+    conn = sqlite3.connect('fuel.db')
+    c = conn.cursor()
+    c.execute("SELECT * FROM refills WHERE user_id = ? ORDER BY date DESC", (user_id,))
+    result = c.fetchall()
+    conn.close()
+    return result
 
 # Conversation states
 WAITING_REFILL_DATA, CONFIRM_RESET = range(2)
@@ -121,7 +158,7 @@ async def refill_data(update: Update, context: ContextTypes.DEFAULT_TYPE):
             )
             return WAITING_REFILL_DATA
         
-        if db.add_refill(user_id, amount, cost, odometer):
+        if add_refill(user_id, amount, cost, odometer):
             price_per_liter = cost / amount
             await update.message.reply_text(
                 "✅ Заправка записана!\n\n"
@@ -214,7 +251,7 @@ async def history(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Display refill history"""
     user_id = update.effective_user.id
     keyboard = get_main_keyboard()
-    refills = db.get_user_refills(user_id)
+    refills = get_user_refills(user_id)
     
     if not refills:
         await update.message.reply_text(
