@@ -1,3 +1,9 @@
+import sys
+if sys.version_info >= (3, 13):
+    import types
+    imghdr = types.ModuleType('imghdr')
+    imghdr.what = lambda x: None
+    sys.modules['imghdr'] = imghdr
 import os
 import logging
 from telegram import Update, ReplyKeyboardMarkup, KeyboardButton
