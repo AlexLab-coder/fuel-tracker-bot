@@ -42,6 +42,9 @@ logger = logging.getLogger(__name__)
 class FuelDatabase:
     def __init__(self):
         self.database_url = os.getenv('DATABASE_URL')
+        print(f"🔧 DATABASE_URL: {self.database_url}")
+        if not self.database_url:
+            print("❌ DATABASE_URL not found!")
         self.init_db()
     
     def get_connection(self):
@@ -60,19 +63,25 @@ class FuelDatabase:
                           odometer INTEGER)''')
             conn.commit()
             conn.close()
+            print("✅ Database initialized successfully!")
         except Exception as e:
+            print(f"❌ Database init error: {e}")
             logging.error(f"Database init error: {e}")
     
     def add_refill(self, user_id, amount, cost, odometer):
         try:
+            print(f"🔧 Adding refill: user={user_id}, amount={amount}, cost={cost}, odometer={odometer}")
+            
             conn = self.get_connection()
             c = conn.cursor()
             c.execute("INSERT INTO refills (user_id, timestamp, amount, cost, odometer) VALUES (%s, %s, %s, %s, %s)",
                      (user_id, datetime.now().isoformat(), amount, cost, odometer))
             conn.commit()
             conn.close()
+            print("✅ Refill added successfully!")
             return True
         except Exception as e:
+            print(f"❌ Add refill error: {e}")
             logging.error(f"Add refill error: {e}")
             return False
     
